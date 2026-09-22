@@ -1,4 +1,4 @@
-// Micro-Macro Policy Impact Assessment Simulator: Rhine-Danube Corridor
+// Rhine-Danube Corridor: Micro Policy Impact Simulator
 // -----------------------------------------------------------------------------
 // Behavioral kernel: multinomial logit with alternative-specific coefficients in
 // natural units, opt-out normalized to zero, alternative-specific constants
@@ -383,6 +383,29 @@ const PLACEHOLDER_CAPACITY: Record<BlockId, { rail: number; iwt: number; demand:
 // 6. Component
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// 7. Author and citation
+// ---------------------------------------------------------------------------
+// Appending ?anon=1 to the URL hides every identifying element (name, contact,
+// source repository, co-authors), for use in double-blind review.
+
+const AUTHOR = {
+  name: "Denise Beil",
+  initials: "DB",
+  role: "PhD Candidate \u00b7 Logistikum, University of Applied Sciences Upper Austria \u00b7 University of Antwerp",
+  thesis:
+    "From Choice Behavior to System Outcomes: Assessing the Impacts of Modal Shift Policies in Freight Transport",
+  linkedin: "https://www.linkedin.com/in/denise-beil/",
+  email: "denise.beil@fh-ooe.at",
+  source: "https://github.com/denisebeil29-cmyk/rhine-danube-pia-simulator",
+};
+
+const CITATION =
+  "Beil, D., Putz-Egger, L.-M., Sys, C. (2026). From Choice Behavior to System Outcomes: " +
+  "Assessing the Impact of Modal Shift Policies on Freight Transport along the Rhine-Danube " +
+  "Corridor. Work-in-progress paper, Doctoral Day, University of Antwerp, 20 October 2026. " +
+  "Interactive simulator: https://micro-macropia.netlify.app";
+
 const ZERO_TAUS: Record<MeasureId, number> = { M1: 0, M2: 0, M3: 0, M4: 0, M5: 0 };
 
 const ALL_INSTRUMENTS: Record<string, number> = {};
@@ -390,6 +413,24 @@ MEASURES.forEach((m) => m.instruments.forEach((i) => (ALL_INSTRUMENTS[i.key] = 0
 
 export default function App() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [copied, setCopied] = useState(false);
+  const anon = useMemo(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("anon") === "1";
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const copyCitation = async () => {
+    try {
+      await navigator.clipboard.writeText(CITATION);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
   const [routeIdx, setRouteIdx] = useState(2);
   const [commodity, setCommodity] = useState("Consumer and industry goods");
   const [mode, setMode] = useState<"measure" | "expert">("measure");
@@ -454,36 +495,85 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* ------------------------------ AUTHOR ------------------------------ */}
+      {!anon && (
+        <div className="author-bar">
+          <div className="author-id">
+            <div className="author-avatar" aria-hidden="true">
+              {AUTHOR.initials}
+            </div>
+            <div className="author-text">
+              <span className="eyebrow">PhD research</span>
+              <span className="author-name">{AUTHOR.name}</span>
+              <span className="author-role">{AUTHOR.role}</span>
+            </div>
+          </div>
+          <div className="author-thesis">
+            <span className="eyebrow">Dissertation</span>
+            <span className="author-thesis-title">{AUTHOR.thesis}</span>
+          </div>
+          <div className="author-links">
+            <a className="pill-btn pill-btn-linkedin" href={AUTHOR.linkedin} target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+                <path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z" />
+              </svg>
+              LinkedIn
+            </a>
+            <a className="pill-btn" href={`mailto:${AUTHOR.email}`}>Contact</a>
+            <a className="pill-btn" href={AUTHOR.source} target="_blank" rel="noopener noreferrer">Source</a>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------ HEADER ------------------------------ */}
       <header className="app-header">
-        <div>
+        <div className="app-header-text">
           <h1 className="main-title">
-          Micro-Macro Policy Impact Assessment Simulator: Rhine-Danube Corridor
+            Micro-Macro Policy Impact Assessment Simulator: Rhine-Danube Corridor
           </h1>
           <p className="subtitle">
-            Multinomial logit on estimated parameters. Policy measure to attribute
-            change to utility to choice probability, with the mode constants pivoted
-            onto the reported modal split.
+            How firms' freight mode choice responds to modal shift policy.
           </p>
+          <div className="chip-row">
+            <span className="chip chip-ok">Estimated parameters, n = 198</span>
+            <span className="chip chip-ok">Reproduces Table 9 within 0.2 pp</span>
+            <span className="chip chip-warn">Stage 4 not computed</span>
+          </div>
         </div>
         <button
-          className="theme-toggle-btn"
+          className="icon-btn"
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          aria-label="Toggle color theme"
+          title={theme === "light" ? "Dark mode" : "Light mode"}
         >
-          {theme === "light" ? "Dark" : "Light"}
+          {theme === "light" ? "\u263E" : "\u2600"}
         </button>
       </header>
 
-    
+      <details className="note note-wide">
+        <summary>About the model</summary>
+        <p>
+          Multinomial logit with alternative-specific coefficients in natural units and
+          an opt-out normalized to zero. The mode constants are pivoted onto the
+          reported modal split, so at zero intensity the calibrated baseline is
+          reproduced by construction. Coefficients, baselines and calibration anchor are
+          the estimates of Tables 2, 3 and 4, not literature priors. With one measure
+          active the conditional road shares reproduce Table 9 to within 0.2 percentage
+          points, the residual being the rounding of the published coefficients.
+          Point predictions only: the outer uncertainty band at the baseline is 15.9 to
+          18.2 pp wide, so read direction and relative size, not absolute levels.
+        </p>
+      </details>
 
       <div className="two-column-layout">
         {/* ------------------------------ LEFT ------------------------------ */}
         <div className="left-column">
           <div className="panel">
-            <h2 className="panel-title">Distance block and corridor reference</h2>
+            <h2 className="panel-title">Corridor and distance block</h2>
 
             <div className="config-inputs">
               <div className="input-group">
-                <label className="input-label">Corridor route, anchors the block</label>
+                <label className="input-label">Reference route</label>
                 <select
                   value={routeIdx}
                   onChange={(e) => setRouteIdx(Number(e.target.value))}
@@ -497,7 +587,7 @@ export default function App() {
                 </select>
               </div>
               <div className="input-group">
-                <label className="input-label">Commodity, display only</label>
+                <label className="input-label">Commodity (map only)</label>
                 <select
                   value={commodity}
                   onChange={(e) => setCommodity(e.target.value)}
@@ -514,40 +604,34 @@ export default function App() {
             <div className="block-strip">
               <span className="block-chip">{block.label}</span>
               <span className="block-meta">
-                {block.distance} · n = {block.n} · {route.km}
+                {block.distance} &middot; n = {block.n} &middot; {route.km}
               </span>
             </div>
 
-            <p className="caveat">
-              The distance classes are not routes. Respondents were routed to a block by
-              their own dominant haul distance and saw all three modes in every block.
-              The route selector sets the block whose attribute levels that relation
-              anchored in the calibration study. Commodity does not enter the model, it
-              is shown for the map only.
-            </p>
+            <CorridorMapLeaflet od={route.od} commodity={commodity} shares={result.conditional} />
 
-            <CorridorMapLeaflet
-              od={route.od}
-              commodity={commodity}
-              shares={result.conditional}
-            />
+            <details className="note">
+              <summary>Why a route sets a block</summary>
+              <p>
+                Distance classes are not routes. Respondents were assigned to a block by
+                their own dominant haul distance and saw all three modes in every block.
+                The route selects the block whose attribute levels it anchored in the
+                calibration study. Commodity does not enter the model.
+              </p>
+            </details>
           </div>
 
           <div className="panel">
-            <h2 className="panel-title">Predicted conditional mode shares</h2>
+            <h2 className="panel-title">Predicted mode shares</h2>
 
             <div className="headline">
               <div className="headline-item">
-                <span className="headline-label">Calibrated baseline, road</span>
-                <span className="headline-value">
-                  {fmt(baseline.conditional.Road * 100)}%
-                </span>
+                <span className="headline-label">Road, baseline</span>
+                <span className="headline-value">{fmt(baseline.conditional.Road * 100)}%</span>
               </div>
               <div className="headline-item">
-                <span className="headline-label">Under policy, road</span>
-                <span className="headline-value">
-                  {fmt(result.conditional.Road * 100)}%
-                </span>
+                <span className="headline-label">Road, with policy</span>
+                <span className="headline-value">{fmt(result.conditional.Road * 100)}%</span>
               </div>
               <div className="headline-item">
                 <span className="headline-label">Change</span>
@@ -570,10 +654,7 @@ export default function App() {
                   <div key={m} className="share-bar-row">
                     <span className="share-mode">{m}</span>
                     <div className="share-bar-container">
-                      <div
-                        className="share-bar-fill"
-                        style={{ width: `${b1}%`, backgroundColor: colors[i] }}
-                      />
+                      <div className="share-bar-fill" style={{ width: `${b1}%`, backgroundColor: colors[i] }} />
                       <div className="share-bar-baseline" style={{ left: `${b0}%` }} />
                     </div>
                     <span className="share-pct">{fmt(b1)}%</span>
@@ -581,29 +662,23 @@ export default function App() {
                 );
               })}
             </div>
-            <p className="legend-note">
-              The vertical mark is the calibrated baseline share. Shares are conditional
-              on selecting a mode. The opt-out is reported separately and never enters a
-              modal split.
-            </p>
 
-            <div className="optout-row">
-              <span>Opt-out probability</span>
-              <span>
-                {fmt(baseline.optOut * 100)}% &rarr; <strong>{fmt(result.optOut * 100)}%</strong>
-              </span>
+            <div className="meta-row">
+              <span className="legend-mark" /> baseline
+              <span className="meta-sep" />
+              Opt-out {fmt(baseline.optOut * 100)}% &rarr; <strong>{fmt(result.optOut * 100)}%</strong>
             </div>
 
-            <h3 className="sub-title">Attribute vector, natural units</h3>
+            <h3 className="sub-title">Attributes</h3>
             <div className="results-table-container">
               <table className="results-table-compact">
                 <thead>
                   <tr>
                     <th></th>
-                    <th>Cost (cent/tkm)</th>
-                    <th>Time (days)</th>
-                    <th>Reliability (pp)</th>
-                    <th>Frequency (dep./wk)</th>
+                    <th>Cost<small>ct/tkm</small></th>
+                    <th>Time<small>days</small></th>
+                    <th>Reliability<small>%</small></th>
+                    <th>Frequency<small>dep./wk</small></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -614,12 +689,10 @@ export default function App() {
                         const v = attrs[m][a];
                         const v0 = block.x0[m][a];
                         const moved = Math.abs(v - v0) > 1e-9;
+                        const d = a === "p" ? 2 : 1;
                         return (
-                          <td key={a} className={moved ? "cell-moved" : ""}>
-                            {fmt(v, a === "p" ? 2 : a === "r" ? 1 : 2)}
-                            {moved && (
-                              <span className="cell-base"> from {fmt(v0, a === "p" ? 2 : 1)}</span>
-                            )}
+                          <td key={a} className={moved ? "cell-moved" : ""} title={moved ? `baseline ${fmt(v0, d)}` : undefined}>
+                            {fmt(v, d)}
                           </td>
                         );
                       })}
@@ -629,63 +702,48 @@ export default function App() {
               </table>
             </div>
 
-            <h3 className="sub-title">Estimated coefficients, {block.label}</h3>
-            <div className="results-table-container">
-              <table className="results-table-compact">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>&beta; cost</th>
-                    <th>&beta; time</th>
-                    <th>&beta; reliability</th>
-                    <th>&beta; frequency</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {MODES.map((m) => (
-                    <tr key={m}>
-                      <td className="mode-label">{m}</td>
-                      {ATTRS.map((a) => (
-                        <td key={a} className={block.beta[m][a] === 0 ? "cell-excluded" : ""}>
-                          {block.beta[m][a] === 0 ? "excluded" : block.beta[m][a].toFixed(3)}
-                        </td>
-                      ))}
+            <details className="note">
+              <summary>Estimated coefficients, {block.label}</summary>
+              <div className="results-table-container">
+                <table className="results-table-compact">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>&beta; cost</th>
+                      <th>&beta; time</th>
+                      <th>&beta; rel.</th>
+                      <th>&beta; freq.</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {block.excluded.length > 0 && (
-              <p className="caveat">
-                Channels excluded on the sign of the coefficient, not on precision:{" "}
-                {block.excluded.join("; ")}. Retaining them would make a mode more
-                attractive as it becomes more expensive.
+                  </thead>
+                  <tbody>
+                    {MODES.map((m) => (
+                      <tr key={m}>
+                        <td className="mode-label">{m}</td>
+                        {ATTRS.map((a) => (
+                          <td key={a} className={block.beta[m][a] === 0 ? "cell-excluded" : ""}>
+                            {block.beta[m][a] === 0 ? "excl." : block.beta[m][a].toFixed(3)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Anchor (tkm shares): road {fmt(block.anchor.Road * 100)}%, rail{" "}
+                {fmt(block.anchor.Rail * 100)}%, IWT {fmt(block.anchor.IWT * 100)}%, opt-out{" "}
+                {fmt(block.s0 * 100)}%.
+                {block.excluded.length > 0 && (
+                  <> Excluded on sign: {block.excluded.join("; ")}.</>
+                )}
               </p>
-            )}
-            <p className="caveat">
-              Calibration anchor, reported tonne-kilometer shares: road{" "}
-              {fmt(block.anchor.Road * 100)}%, rail {fmt(block.anchor.Rail * 100)}%, IWT{" "}
-              {fmt(block.anchor.IWT * 100)}%, opt-out {fmt(block.s0 * 100)}%. Standard
-              errors are clustered on the respondent, the specification is a
-              multinomial logit without random parameters, and the reported shares carry
-              no confidence band in this interface.
-            </p>
+            </details>
           </div>
 
           <div className="panel panel-muted">
             <h2 className="panel-title">
-              Corridor utilization
-              <span className="stage-flag">Stage 4, not computed</span>
+              Corridor utilization <span className="chip chip-warn">Not computed</span>
             </h2>
-            <div className="not-computed-banner">
-              These bars are <strong>not a result</strong>. The macro stage requires an
-              origin-destination matrix by mode and commodity, section capacity for the
-              rail and waterway network, an allocation rule for shifted volumes, and a
-              feedback through which utilization degrades the reliability and transit
-              time that the choice model treats as exogenous. None of these is in the
-              dataset. The placeholders below display the shape of the missing stage so
-              that the open feedback is visible in operational form.
-            </div>
             <div className="capacity-summary-modes">
               {(["Rail", "IWT"] as const).map((m) => {
                 const pct = m === "Rail" ? capacity.rail : capacity.iwt;
@@ -696,66 +754,49 @@ export default function App() {
                       <span className="capacity-summary-value">{fmt(pct, 0)}%</span>
                     </div>
                     <div className="capacity-bar-container">
-                      <div
-                        className="capacity-bar-fill capacity-bar-placeholder"
-                        style={{ width: `${Math.min(100, pct)}%` }}
-                      />
+                      <div className="capacity-bar-fill capacity-bar-placeholder" style={{ width: `${Math.min(100, pct)}%` }} />
                     </div>
                   </div>
                 );
               })}
             </div>
+            <details className="note">
+              <summary>Why this is a placeholder</summary>
+              <p>
+                Stage 4 needs an OD matrix by mode and commodity, section capacity, an
+                assignment rule and a feedback from utilization to reliability. None is
+                in the dataset. The bars show the shape of the missing stage, not a result.
+              </p>
+            </details>
           </div>
         </div>
 
         {/* ------------------------------ RIGHT ----------------------------- */}
         <div className="right-column">
           <div className="panel">
-            <div className="panel-title-row">
-              <h2 className="panel-title">Policy intensity</h2>
-              <div className="mode-switch">
-                <button
-                  className={mode === "measure" ? "switch-btn active" : "switch-btn"}
-                  onClick={() => setMode("measure")}
-                >
-                  Measure mode
+            <div className="panel-head">
+              <h2 className="panel-title panel-title-bare">Policy intensity</h2>
+              <div className="segmented">
+                <button className={mode === "measure" ? "seg active" : "seg"} onClick={() => setMode("measure")}>
+                  Measures
                 </button>
-                <button
-                  className={mode === "expert" ? "switch-btn active" : "switch-btn"}
-                  onClick={() => setMode("expert")}
-                >
-                  Expert mode
+                <button className={mode === "expert" ? "seg active" : "seg"} onClick={() => setMode("expert")}>
+                  Instruments
                 </button>
               </div>
             </div>
 
-            {mode === "measure" ? (
-              <div className="info-box">
-                Intensity &tau; is the fraction of the range the experiment presented, so
-                &tau; = 1 is the most policy-favorable level shown for that mode and
-                block, not an arbitrary maximum. Every attribute affected by a measure
-                moves proportionally, which treats the measure as a coherent program.
-                With one measure active the output reproduces the paper scenario.
-              </div>
-            ) : (
-              <div className="info-box info-box-warn">
-                <strong>Assumption, not estimation.</strong> The experiment identifies
-                the measure bundle, not the contribution of a single instrument inside
-                it. In this mode the intensity of a measure is the unweighted mean of
-                its instrument sliders. That weighting is a property of this interface
-                and is not supported by the estimation. Use measure mode for any number
-                that is reported.
-              </div>
-            )}
+            <p className="hint">
+              {mode === "measure"
+                ? "100% = most policy-favorable level tested in the experiment."
+                : "Measure intensity = mean of its instruments. Assumed weighting, not estimated."}
+            </p>
 
             {activeCount > 1 && (
-              <div className="info-box info-box-warn">
-                {activeCount} measures active. Attribute changes are summed across
-                measures and then clamped to the level range presented in the
-                experiment, so the simulation stays inside the estimation domain. The
-                paper reports measures singly, so combined figures are an extension of
-                its scenarios rather than a reproduction of them.
-              </div>
+              <p className="hint hint-warn">
+                {activeCount} measures combined: effects summed and capped at the tested
+                range. The paper reports measures singly.
+              </p>
             )}
 
             <div className="policy-grid-compact">
@@ -763,53 +804,41 @@ export default function App() {
                 const tau = taus[ms.id];
                 const disabled = Boolean(ms.disabled);
                 return (
-                  <div
-                    key={ms.id}
-                    className={disabled ? "policy-group policy-group-off" : "policy-group"}
-                  >
-                    <h3 className="policy-group-title" style={{ color: ms.color }}>
-                      <span className="policy-badge">{ms.code}</span>
+                  <div key={ms.id} className={disabled ? "policy-group policy-group-off" : "policy-group"}>
+                    <div className="policy-group-head">
+                      <span className="policy-badge" style={{ color: ms.color }}>{ms.code}</span>
                       <span className="policy-group-title-text">{ms.title}</span>
-                      <span className="kind-chip">{ms.kind}</span>
-                    </h3>
-                    <p className="policy-group-description">{ms.channels}</p>
+                      <span className={`kind-chip kind-${ms.kind.toLowerCase()}`}>{ms.kind}</span>
+                    </div>
+                    <p className="policy-channels">{ms.channels}</p>
 
                     {disabled ? (
-                      <p className="disabled-note">{ms.disabled}</p>
+                      <details className="note">
+                        <summary>Not simulated</summary>
+                        <p>{ms.disabled}</p>
+                      </details>
                     ) : mode === "measure" ? (
                       <>
-                        <div className="policy-item">
-                          <div className="policy-item-header">
-                            <span className="policy-item-label">Intensity &tau;</span>
-                            <span className="policy-item-value" style={{ color: ms.color }}>
-                              {Math.round(tau * 100)}%
-                            </span>
-                          </div>
+                        <div className="slider-row">
                           <input
                             type="range"
                             min={0}
                             max={100}
                             step={1}
                             value={Math.round(tau * 100)}
-                            onChange={(e) =>
-                              setMeasureTaus({
-                                ...measureTaus,
-                                [ms.id]: Number(e.target.value) / 100,
-                              })
-                            }
+                            onChange={(e) => setMeasureTaus({ ...measureTaus, [ms.id]: Number(e.target.value) / 100 })}
                             className="policy-slider"
                             style={{
                               background: `linear-gradient(to right, ${ms.color} 0%, ${ms.color} ${tau * 100}%, var(--slider-track) ${tau * 100}%, var(--slider-track) 100%)`,
                             }}
                           />
+                          <span className="slider-value" style={{ color: ms.color }}>
+                            {Math.round(tau * 100)}%
+                          </span>
                         </div>
                         <div className="threshold-row">
-                          <span>
-                            &minus;5 pp road at <strong>{thresholds[ms.id]?.five}</strong>
-                          </span>
-                          <span>
-                            &minus;10 pp road at <strong>{thresholds[ms.id]?.ten}</strong>
-                          </span>
+                          <span className="th-chip">&minus;5 pp at <strong>{thresholds[ms.id]?.five}</strong></span>
+                          <span className="th-chip">&minus;10 pp at <strong>{thresholds[ms.id]?.ten}</strong></span>
                         </div>
                       </>
                     ) : (
@@ -817,41 +846,28 @@ export default function App() {
                         {ms.instruments.map((inst) => {
                           const v = instruments[inst.key] ?? 0;
                           return (
-                            <div key={inst.key} className="policy-item">
-                              <div className="policy-item-header">
-                                <span className="policy-item-label">{inst.label}</span>
-                                <span
-                                  className="policy-item-value"
-                                  style={{ color: ms.color }}
-                                >
-                                  {v}%
-                                </span>
+                            <div key={inst.key} className="instrument">
+                              <span className="instrument-label">{inst.label}</span>
+                              <div className="slider-row">
+                                <input
+                                  type="range"
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  value={v}
+                                  onChange={(e) => setInstruments({ ...instruments, [inst.key]: Number(e.target.value) })}
+                                  className="policy-slider"
+                                  style={{
+                                    background: `linear-gradient(to right, ${ms.color} 0%, ${ms.color} ${v}%, var(--slider-track) ${v}%, var(--slider-track) 100%)`,
+                                  }}
+                                />
+                                <span className="slider-value" style={{ color: ms.color }}>{v}%</span>
                               </div>
-                              <input
-                                type="range"
-                                min={0}
-                                max={100}
-                                step={1}
-                                value={v}
-                                onChange={(e) =>
-                                  setInstruments({
-                                    ...instruments,
-                                    [inst.key]: Number(e.target.value),
-                                  })
-                                }
-                                className="policy-slider"
-                                style={{
-                                  background: `linear-gradient(to right, ${ms.color} 0%, ${ms.color} ${v}%, var(--slider-track) ${v}%, var(--slider-track) 100%)`,
-                                }}
-                              />
                             </div>
                           );
                         })}
                         <div className="threshold-row">
-                          <span>
-                            Implied measure intensity &tau; ={" "}
-                            <strong>{Math.round(tau * 100)}%</strong>
-                          </span>
+                          <span className="th-chip">Measure intensity <strong>{Math.round(tau * 100)}%</strong></span>
                         </div>
                       </>
                     )}
@@ -860,25 +876,28 @@ export default function App() {
               })}
             </div>
 
-            <button onClick={reset} className="reset-button">
-              Reset to calibrated baseline
+            <button onClick={reset} className="reset-button" disabled={!anyActive}>
+              Reset to baseline
             </button>
-
-            {!anyActive && (
-              <p className="caveat">
-                At zero intensity the model reproduces the reported modal split by
-                construction, since the pivot forces it to.
-              </p>
-            )}
           </div>
         </div>
       </div>
 
+      {/* ------------------------------ FOOTER ----------------------------- */}
       <footer className="app-footer">
-        Beil, D., Putz-Egger, L.-M., Sys, C. From choice behavior to system outcomes.
-        Behavioral parameters estimated on 198 corridor decision makers, 2,345 choice
-        tasks. Stage 4, the aggregation to origin-destination flows under network
-        capacity, is specified but not computed.
+        {anon ? (
+          <p className="footer-note">Author information withheld for anonymized review.</p>
+        ) : (
+          <div className="cite-block">
+            <div className="cite-head">
+              <span className="eyebrow">How to cite</span>
+              <button className="pill-btn pill-btn-sm" onClick={copyCitation}>
+                {copied ? "Copied \u2713" : "Copy"}
+              </button>
+            </div>
+            <p className="cite-text">{CITATION}</p>
+          </div>
+        )}
       </footer>
     </div>
   );
